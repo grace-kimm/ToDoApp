@@ -22,46 +22,29 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         toDoTableView.setEditing(false, animated: true)
     }
     
-    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
-        return list.count
-    }
-    
-    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
-        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
-        
-        cell.textLabel?.text = list[indexPath.row].title
-        cell.detailTextLabel?.text = list[indexPath.row].content
-        if list[indexPath.row].isComplete {
-            cell.accessoryType = .checkmark
-        }else{
-            cell.accessoryType = .none
-        }
-        
-        return cell
-    }
-    
-    // 수정모드
-    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
-        list.remove(at: indexPath.row)
-        toDoTableView.reloadData()
-    }
-    
-    // 리스트 선택 시 완료 된 일로 표시
-    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
-        // 이미 체크 되어 있는 경우 return
-        guard !list[indexPath.row].isComplete else {
+    @IBAction func editButtonAction(_ sender: Any) {
+        guard !list.isEmpty else {
             return
         }
+        self.navigationItem.leftBarButtonItem = doneButton
+        toDoTableView.setEditing(true, animated: true)
+    }
+    
+    override func viewDidLoad() {
+        super.viewDidLoad()
         
-        // 리스트 선택 시 완료된 할 일 표시 (checkmark)
-        list[indexPath.row].isComplete = true
+        toDoTableView.delegate = self
+        toDoTableView.dataSource = self
         
-        let dialog = UIAlertController(title: "ToDo List", message: "완료 되었습니다.", preferredStyle: .alert)
-        let action = UIAlertAction(title: "확인", style: UIAlertAction.Style.default)
-        dialog.addAction(action)
-        self.present(dialog, animated: true, completion: nil)
+        loadAllData()
+        print(list.description)
         
-        // 리스트 데이터 갱신
+        doneButton.style = .plain
+        doneButton.target = self
+    }
+    
+    override func viewDidAppear(_ animated: Bool) {
+        saveAllData()
         toDoTableView.reloadData()
     }
     
@@ -74,7 +57,7 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
                 "isComplete" : $0.isComplete
             ]
         }
-        
+        print(type(of: data))
         let userDefaults = UserDefaults.standard
         userDefaults.set(data, forKey: "items")
         userDefaults.synchronize() // 동기화
@@ -104,30 +87,51 @@ class ViewController: UIViewController, UITableViewDataSource, UITableViewDelega
         super.didReceiveMemoryWarning()
     }
     
-    @IBAction func editButtonAction(_ sender: Any) {
-        guard !list.isEmpty else {
-            return
-        }
-        toDoTableView.setEditing(true, animated: true)
+    func tableView(_ tableView: UITableView, numberOfRowsInSection section: Int) -> Int {
+        return list.count
     }
-    override func viewDidAppear(_ animated: Bool) {
+    
+    func tableView(_ tableView: UITableView, cellForRowAt indexPath: IndexPath) -> UITableViewCell {
+        let cell = tableView.dequeueReusableCell(withIdentifier: "cell", for: indexPath)
+        
+        cell.textLabel?.text = list[indexPath.row].title
+        cell.detailTextLabel?.text = list[indexPath.row].content
+        
+        if list[indexPath.row].isComplete {
+            cell.accessoryType = .checkmark
+            cell.contentView.backgroundColor = #colorLiteral(red: 1, green: 0.4932718873, blue: 0.4739984274, alpha: 1)
+        }else{
+            cell.accessoryType = .none
+            cell.contentView.backgroundColor = nil
+        }
+        
+        return cell
+    }
+    
+    // 수정모드
+    func tableView(_ tableView: UITableView, commit editingStyle: UITableViewCell.EditingStyle, forRowAt indexPath: IndexPath) {
+        list.remove(at: indexPath.row)
         toDoTableView.reloadData()
     }
     
-    override func viewDidLoad() {
-        super.viewDidLoad()
+    // 리스트 선택 시 완료 된 일로 표시
+    func tableView(_ tableView: UITableView, didSelectRowAt indexPath: IndexPath) {
+        // 이미 체크 되어 있는 경우 return
+        guard !list[indexPath.row].isComplete else {
+            return
+        }
         
-        list.append(ToDoList(title: "test1", content: "testData"))
-        list.append(ToDoList(title: "test2", content: "testData"))
-        list.append(ToDoList(title: "test3", content: "testData"))
+        // 리스트 선택 시 완료된 할 일 표시 (checkmark)
+        list[indexPath.row].isComplete = true
         
-        toDoTableView.delegate = self
-        toDoTableView.dataSource = self
+        let dialog = UIAlertController(title: "ToDo List", message: "완료 되었습니다.", preferredStyle: .alert)
+        let action = UIAlertAction(title: "확인", style: UIAlertAction.Style.default)
+        dialog.addAction(action)
+        self.present(dialog, animated: true, completion: nil)
         
-        doneButton.style = .plain
-        doneButton.target = self
+        // 리스트 데이터 갱신
+        toDoTableView.reloadData()
     }
-
 
 }
 
